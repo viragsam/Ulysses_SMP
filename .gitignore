@@ -1,3 +1,4 @@
-smp-ephem/kernels/
-smp-ephem/.venv/
-smp-ephem/__pycache__/
+kernels/
+.venv/
+__pycache__/
+
