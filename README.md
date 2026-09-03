@@ -12,6 +12,7 @@ Its purpose is to validate the geometry before it is reimplemented in Unreal
 |---|---|
 | `emphemeris.py` | The script. Prompts for start, stop and step; writes `ephemeris.csv`. |
 | `smp.tm` | SPICE meta-kernel: a list of the data files to load. |
+| `get_kernels.sh` / `get_kernels.ps1` | Download the kernels (Linux/macOS and Windows). |
 | `kernels/` | NAIF data files (not code). See below. |
 | `ephemeris.csv` | Output: `utc, sun_az, sun_el, earth_az, earth_el`, one row per step. |
 
@@ -71,10 +72,50 @@ Not yet done: comparison of one instant against JPL Horizons
 (Observer Table, target Sun, observer on Moon at site coordinates) to confirm
 the azimuth zero-point to sub-0.1°.
 
+## Setup
+
+Requires Python 3.10+ and ~45 MB of kernel downloads.
+
+### Linux / macOS
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install spiceypy numpy
+chmod +x get_kernels.sh
+./get_kernels.sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install spiceypy numpy
+Set-ExecutionPolicy -Scope Process Bypass
+.\get_kernels.ps1
+```
+
+Both download scripts are idempotent (existing files are skipped). If you
+prefer to fetch manually, the URLs are:
+
+```
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/moon_pa_de440_200625.bpc
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/fk/satellites/moon_de440_250416.tf
+```
+
+Place them under `kernels/lsk`, `kernels/spk`, `kernels/pck`, `kernels/fk`
+as listed in `smp.tm`. NAIF occasionally updates the frame kernel; if the
+`.tf` download 404s, browse `fk/satellites/` for the newest `moon_de440_*.tf`
+and update both the script and `smp.tm`.
+
 ## Usage
 
 ```bash
-source .venv/bin/activate
+source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
 python emphemeris.py
 # Enter start UTC (YYYY-MM-DDTHH:MM:SS): 2000-02-01T00:00:00
 # Enter stop UTC  (YYYY-MM-DDTHH:MM:SS): 2000-03-01T00:00:00
