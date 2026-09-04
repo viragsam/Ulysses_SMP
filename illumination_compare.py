@@ -24,7 +24,7 @@ for ax, csv_path, title in zip(axes, [eq_path, polar_path], titles):
     ax.set_title(f"{title}\nfloor lit {lit[cy, cx] * 100:.0f}%")
 
 fig.colorbar(im, ax=axes, label="fraction lit", shrink=0.8)
-fig.suptitle("Same synthetic crater, same month — site latitude is the only difference")
+fig.suptitle("Same synthetic crater, same month, different site latitude")
 
 plt.savefig("illumination_compare.png", dpi=150)
 plt.show()
