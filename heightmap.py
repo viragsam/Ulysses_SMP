@@ -18,12 +18,26 @@ def synthetic_crater(n=N_DEFAULT):
 
 def load_lola_crop(path, size=100):
     """Load a cropped LOLA GeoTIFF and downsample it to `size` x `size`
-    cells (nearest-neighbor decimation, adequate for this demo)."""
+    cells (nearest-neighbor decimation, adequate for this demo).
+
+    GeoTIFF row 0 is the northernmost row, but shadow_mask treats +row as
+    +north (dy = cos(az)), so the array is flipped. Heights come back in
+    metres and pixel spacing in metres/pixel; shadow_mask's `d` is in cell
+    units, so heights are rescaled by (pixel spacing * downsample step) to
+    match — otherwise a 100 m-tall crater at 20 m/px would cast a shadow as
+    if it were 100 cells tall instead of ~5.
+
+    Only equirectangular tiles are handled correctly. LOLA's polar-stereographic
+    products need azimuth remapped per-longitude before this applies.
+    """
     import rasterio
     with rasterio.open(path) as src:
         arr = src.read(1).astype(float)
+        px_size = src.res[0]   # metres per pixel, assumed square
+    arr = arr[::-1]             # row 0 = north -> +row index = +north
     step = max(arr.shape[0] // size, arr.shape[1] // size, 1)
-    return arr[::step, ::step][:size, :size]
+    arr = arr[::step, ::step][:size, :size]
+    return arr / (px_size * step)   # metres -> cell units (1 cell = step pixels)
 
 
 def shadow_mask(heightmap, sun_az, sun_el):

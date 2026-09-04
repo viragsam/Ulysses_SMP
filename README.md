@@ -172,13 +172,34 @@ The terrain and shadow logic live in `heightmap.py` so both scripts (and
 any future ones) share one implementation. `load_lola_crop(path, size=100)`
 reads a real LOLA GeoTIFF crop with `rasterio` and downsamples it to
 `size`×`size` cells — pass that path as `shadow_heightmap.py`'s third
-argument to shadow actual terrain instead of the synthetic crater. Not yet
-run against a real tile (none downloaded here); `pip install rasterio` first.
+argument to shadow actual terrain instead of the synthetic crater. It
+handles two things a raw `read(1)` would get wrong: GeoTIFF row 0 is north,
+but `shadow_mask` treats +row as +north, so the array is flipped; and
+heights come back in metres while `shadow_mask`'s march distance `d` is in
+cell units, so heights are divided by `pixel spacing × downsample step` to
+match — skip that and a real crater's shadow length comes out scaled by
+however many metres one pixel covers (5, 20, 118…), silently wrong rather
+than crashing. Verified against a synthetic GeoTIFF with a known-position
+bump (correct flip, correct scaling) but not yet against a real LOLA tile.
+
+Only equirectangular projections are handled correctly — LOLA's south-pole
+product is polar-stereographic, where "up" in the raster is lunar north
+only along the crop's central meridian, so azimuth would need remapping
+per-longitude before this applies. Use an equirectangular tile (LOLA's
+equirectangular products are fine down to ~80° latitude) for the first
+real-tile test; treat polar-stereographic tiles as a follow-up.
+
+Getting a tile: USGS Astrogeology's lunar LOLA product page — search
+"LOLA LDEM 118m" (or "LDEM 20m" for finer detail; the 118 m/px global
+GeoTIFF is ~2 GB). Crop a region out of it with QGIS or
+`gdal_translate -projwin`. `pip install rasterio` pulls GDAL bindings and
+can take a while.
 
 ## Next
 
 - Reimplement steps 3–6 in Unreal with the MaxQ plugin (same function names:
   `spkpos`, `latrec`); diff its output against `ephemeris.csv`.
-- Point `shadow_heightmap.py` at a real LOLA tile (`load_lola_crop` in
-  `heightmap.py` is written but untested against actual GeoTIFF data) so
-  the illumination map reflects real terrain, not the synthetic crater.
+- Run `shadow_heightmap.py` against a real, cropped equirectangular LOLA
+  tile so the illumination map reflects actual terrain, not the synthetic
+  crater. `load_lola_crop` is implemented and unit-tested but not yet run
+  against real GeoTIFF data.
