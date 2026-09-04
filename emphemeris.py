@@ -14,6 +14,16 @@ if step_s.strip() == "":
 else:
 	step = float(step_s)
 
+# Site inputs (default: 0.67N 23.3E, the equatorial test site)
+site_lat_s = input("Enter site latitude deg, +N (default 0.67): ")
+site_lat_deg = 0.67 if site_lat_s.strip() == "" else float(site_lat_s)
+site_lon_s = input("Enter site longitude deg, +E (default 23.3): ")
+site_lon_deg = 23.3 if site_lon_s.strip() == "" else float(site_lon_s)
+
+out_path = input("Enter output CSV path (default ephemeris.csv): ")
+if out_path.strip() == "":
+	out_path = "ephemeris.csv"
+
 et0 = spiceypy.str2et(start)
 et1 = spiceypy.str2et(stop)
 
@@ -38,8 +48,8 @@ def az_el(target, et, site, up, east, north):
 
 
 # Site definition (compute once)
-site_lon = 23.3 * spiceypy.rpd()  # radians
-site_lat = 0.67 * spiceypy.rpd()  # radians
+site_lon = site_lon_deg * spiceypy.rpd()  # radians
+site_lat = site_lat_deg * spiceypy.rpd()  # radians
 site = spiceypy.latrec(1737.4, site_lon, site_lat)
 up = site / norm(site)
 east = np.cross([0, 0, 1], up)
@@ -47,7 +57,6 @@ east = east / norm(east)
 north = np.cross(up, east)
 
 #oop over the time range and write CSV with SUN and EARTH az/el
-out_path = "ephemeris.csv"
 with open(out_path, "w", newline="") as csvfile:
 	writer = csv.writer(csvfile)
 	writer.writerow(["utc", "sun_az", "sun_el", "earth_az", "earth_el"])
